@@ -1,0 +1,446 @@
+---
+title: "Paper2 DHS Diet Diversity - Global regression at cluster level"
+author: "Piyush Mehta"
+last updated: Feb2,25
+output: html_document
+
+# This code is for All_data_v6.dta that has all countries
+# Fixed effects model
+
+# Running regressions with the AEI variable that contains the AEI of the year closest to the DHS survey year for each cluster
+# Running regressions for 3 models (overall, sust and unsust) and plotting them together for the manuscript figure
+
+#May3,24 (version11 manuscript) - not keeping the AEI change variable
+---
+
+# PLOT MODELS TOGETHER
+```{r results='hide', message=FALSE, warning=FALSE}
+library(dotwhisker)
+library(dplyr)
+library('lme4')
+library('lmerTest')
+library('MuMIn')
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+library(expss)
+library(car)
+library(broom.mixed)
+library(ggplot2)
+library(forcats)
+library(extrafont)
+library(ggplot2)
+library(ggrepel)
+library(viridis)
+#library(tidyverse)
+# need to import fonts so that TW Cen font can work
+#font_import()
+#loadfonts(device = "win")
+
+setwd("D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\")
+
+```
+# Load all data
+```{r}
+
+df = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Global.csv')
+df_sust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Global_sust.csv')
+df_unsust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Global_unsust.csv')
+
+```
+
+
+
+# All models
+```{r results='hide', message=FALSE, warning=FALSE}
+
+# (Model 1) Overall
+model1 = lm(diet_m ~ aei_closest_std  + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country) , df)
+
+# (Model 2) Sustainable
+model2 = lm(diet_m ~ aei_closest_std  + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country), df_sust)
+
+# (Model 3) Unsustainable
+model3 = lm(diet_m ~ aei_closest_std  + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country), df_unsust)
+
+```
+
+### check collinearity
+```{r}
+vif(model1)
+vif(model2)
+vif(model3)
+```
+
+
+# https://nicholasrjenkins.science/post/data_viz_r/data_visualization_r/
+# combining the results from both models into a single data frame
+# also adding a new column with the name of each model
+```{r}
+fit1 <- tidy(model1, conf.int = TRUE) %>% 
+  mutate(model = "Overall")
+
+fit2 <- tidy(model2, conf.int = TRUE) %>% 
+  mutate(model = "Sustainable")
+
+fit3 <- tidy(model3, conf.int = TRUE) %>% 
+  mutate(model = "Unsustainable")
+
+model_results <- bind_rows(fit1, fit2, fit3)
+
+# Filter out rows corresponding to the intercept term, sd__observation and sd__intercept
+model_results <- model_results[!(model_results$term %in% c("(Intercept)", "sd__Observation", "sd__(Intercept)")), ]
+
+# keep only the rows that we need, exclude the factor vars coefficients
+model_results <- model_results[c(1:13, 48:60, 95:107), ]
+
+label1 = c(
+          aeidif_std = "Irrigated area change (Ha)",
+          aei_pctdif_std = "Irrigated area percent change",
+          aei_pct2000_std = "Irrigated area 2000",
+          aeidif_10y_std = "Irrigated area 10y diff",
+					aeidif_20y_std = "Irrigated area change 20y",
+					aeidif_30y_std = "Irrigated area 30y diff",
+					aei_closest_std = "Irrigated area of closest year",
+          treecov_std = "Tree cover",
+          disturban_std = "Distance from city",
+          distroad_std = "Distance from road",
+          disturban_cat_std = "Distance from city",
+          distroad_cat_std = "Distance from road",
+          popden_std = "Population density",
+          tlu_std = "Livestock density",
+          age_std = "Child age",
+          education_std = "Education of household head",
+          improvedtoilet = "Improved Sanitation",
+          improvedwater = "Improved Water",
+          sex = "Male household head",
+          timewater_std = "Time to water",
+          poorest_std = "Poorest household",
+          poorer_std = "Poorer household",
+          richer_std = "Richer household",
+          richest_std = "Richest household",
+          wealthindex_std = "Wealth index",
+					yeardhs = "Survey year")
+
+#label2 = c(
+#          aeidif_20y_std = "Irrigated area change 20y",
+#					aei_closest_std = "Irrigated area of closest year")
+
+label2 = c(aei_closest_std = "Irrigated area of closest year")
+
+# Create a vector of variable names with the desired order
+data_labels <- c(
+"aei_closest_std","aeidif_10y_std", "aeidif_20y_std", "aeidif_30y_std", "aeidif_std", "aei_pctdif_std", "aei_pct2000_std", "treecov_std", "disturban_std", "distroad_std", "disturban_cat_std", "distroad_cat_std", "popden_std", "tlu_std", "age_std", "education_std", "improvedtoilet",
+  "improvedwater", "sex", "timewater_std", "poorest_std", "poorer_std",
+  "richer_std", "richest_std", "wealthindex_std", "yeardhs"
+)
+
+data_order <- unique(model_results$term)
+
+# Reorder the term variable in your data according to the desired order
+model_results$term <- factor(model_results$term, levels = data_labels)
+
+# Create a column for significance labels
+model_results$significance <- ifelse(model_results$p.value < 0.05, "*", "")
+
+# Add a column for significance level [USED THIS IN PLOT]
+# Jan28,24 I also added the p<0.1 "." as "*" in the column - haven't done it for all prev codes
+# so doing one extra * for each coefficient significance to also include the p<0.1 significance, bz the diff in diff regression is marginally significant (Fig2C)
+model_results$significance_level <- ifelse(model_results$p.value < 0.001, "****",
+                        ifelse(model_results$p.value < 0.01, "***",
+                        ifelse(model_results$p.value < 0.05, "**",
+                        ifelse(model_results$p.value < 0.1, "*", ""))))
+
+# keep only irrigation coefficients
+rows_to_keep <- c(1, 14, 27) # Create a vector of row indices you want to keep
+model_results_aei <- model_results[rows_to_keep,] 
+
+# exported it
+#write.csv(model_results, "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Combined_results.csv")
+
+# (feb2,25)
+# create new variable model1 as Overall, No water stress, Water stress
+
+model_results <- model_results %>%
+  mutate(model1 = case_when(
+    model == "Sustainable" ~ "No water stress",
+    model == "Unsustainable" ~ "Water stress",
+    TRUE ~ "Overall"  # Ensure Overall remains unchanged
+  )) %>%
+  mutate(model1 = factor(model1, levels = c("Overall", "No water stress", "Water stress")))
+
+```
+
+
+## SUPPLEMENTARY FIGURE S3 (feb2,25 - used this for Manuscript NatSust4)
+
+# Plot for all variables coefficients without aserisks
+# Will put asterisks in the ppt as putting them here is not clear enough
+
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+# I used c(-1,0.4) first and bz of that, 2-3 error bars were not visible
+ggplot(data = model_results, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model1)) +
+  
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray", height = 0.2) +
+  
+  geom_point(shape = 16, position = position_dodge(width = 0.6), size = 2) +
+  
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(-0.4, 0.32)) +
+  scale_y_discrete(limits = rev(data_order), labels = label1) +
+  #scale_color_viridis(discrete = TRUE) +
+  #scale_color_brewer(palette = "Dark2") + 
+  # https://www.color-hex.com/color-palette/1872
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold", size = 14),
+        legend.key = element_blank(),
+        axis.text.y = element_text(size = 14), # y axis text size
+        axis.text.x = element_text(size = 14), # x axis text size
+        legend.text = element_text(size=14) # legend text size
+        )
+  #theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"))
+  
+```
+
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Figure_S3_no_asterisks.png",
+
+  fig = last_plot(),
+  width = 18,
+  height = 12,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  axis.textsize = 0.5,
+  axis.titlesize = 0.5
+  )
+```
+# ----------------------------------------------------------------------------------------
+# PLOT FOR ONLY IRRIGATION VARIABLES [Jan28,24]
+# Figure 2- A (Manuscript V9)
+
+# oct26,23 - removed the lines between stars and variable by using geom_text instead of geom_text_repel
+# Oct30,23 - unable to make stars go closer to the points, so removed the stars in this fig, and will insert them in ppt
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+# I used c(-1,0.4) first and bz of that, 2-3 error bars were not visible
+ggplot(data = model_results_aei, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model)) +
+    
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray", height = 0.1) +
+  
+  geom_point(shape = 16, position = position_dodge(width = 0.5), size=3) +
+  
+  # commented the below line for asterisks (oct30,23)
+  #geom_text(aes(label = significance_level), nudge_x = -0.02, nudge_y= -0.01, size = 4, show.legend = FALSE ) +  # Add significant labels
+  #geom_hline(yintercept = rev(data_order), linetype = "dotted", color = "gray70") +  # Add horizontal lines
+  
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(0.03, 0.17)) +
+  scale_y_discrete( labels = label2) +
+  #scale_color_viridis(discrete = TRUE) +
+  #scale_color_brewer(palette = "Dark2") + 
+  # https://www.color-hex.com/color-palette/1872
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.key = element_blank(),
+        axis.text = element_text(size = 14), # the axis label size
+        axis.title = element_text(size = 14), # Adjust the size for axis titles
+        legend.text = element_text(size = 14)  # Adjust the size for legend text
+        )
+  #theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"))
+  
+```
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Combined1_aei.png",
+
+  fig = last_plot(),
+  width = 18,
+  height = 12,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  #axis.textsize = 0.5,
+  #axis.titlesize = 0.5
+  )
+```
+
+
+
+
+## --------------------------------------------------------------------------------------
+# Didn't use this
+# oct26,23 - removed the lines between stars and variable by using geom_text instead of geom_text_repel
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+# I used c(-1,0.4) first and bz of that, 2-3 error bars were not visible
+
+ggplot(data = model_results, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model)) +
+    geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray", height = 0.2) +
+  geom_point(shape = 16, position = position_dodge(width = 0.6)) +
+  geom_text(aes(label = significance_level), nudge_x = -0.02, nudge_y= -0.02, size = 3, show.legend = FALSE) +  # Add significant labels
+  #geom_hline(yintercept = rev(data_order), linetype = "dotted", color = "gray70") +  # Add horizontal lines
+  
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(-0.4, 0.32)) +
+  scale_y_discrete(limits = rev(data_order), labels = label1) +
+  #scale_color_viridis(discrete = TRUE) +
+  #scale_color_brewer(palette = "Dark2") + 
+  # https://www.color-hex.com/color-palette/1872
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.key = element_blank())
+  #theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"))
+  
+```
+
+
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Combined1.png",
+
+  fig = last_plot(),
+  width = 18,
+  height = 12,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  axis.textsize = 0.5,
+  axis.titlesize = 0.5
+  )
+```
+
+# ----------------------------------------------------------------------------------------
+# PLOT 
+# DIDN'T USE
+# Nov22,23 - show significance with other shapes, removed asterisks
+
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+# I used c(-1,0.4) first and bz of that, 2-3 error bars were not visible
+
+ggplot(data = model_results, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model)) +
+  
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model), position = position_dodge(width = 0.5),  # Offset the error bars
+        color = "gray", height = 0.2) +
+
+  geom_point(aes(shape = ifelse(significance %in% c("*", "**", "***"), "filled", "others")), position = position_dodge(width = 0.5), size = 3) +
+  scale_shape_manual(values = c("filled" = 17, "others" = 16), guide = "none") +
+  scale_size_manual(values = c("filled" = 0.5, "others" = 1)) +
+  
+  labs(x = "Coefficient Estimate", y = "", color = "", shape = "") +
+  
+  scale_x_continuous(limits = c(-0.4, 0.32)) +
+  scale_y_discrete(limits = rev(data_order), labels = label1) +
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) + # https://www.color-hex.com/color-palette/1872
+  
+  theme_minimal() +
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.key = element_blank(),
+        axis.text = element_text(size = 12), # size of axis label size
+        axis.title = element_text(size = 12), # size for axis titles
+        legend.text = element_text(size = 12),  # size for legend text
+        panel.background = element_rect(fill = "white"), # Set background color to white
+        legend.position = "top"  # Move the legend to the top
+        )  
+
+```
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Combined2.png",
+
+  fig = last_plot(),
+  width = 18,
+  height = 12,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  axis.textsize = 0.5,
+  axis.titlesize = 0.5
+  )
+```
+
+# THIS STD ERROR IS THE SAME AS WE ALREADY HAVE
+
+```{r}
+# # Extract the variance-covariance matrix of random effects
+# vcov_matrix <- vcov(model1)
+# 
+# # Extract the correlation matrix from the variance-covariance matrix
+# cor_matrix <- cov2cor(vcov_matrix)
+# # Extract the standard errors for random effects
+# std_errors <- sqrt(diag(vcov_matrix))
+# std_errors
+# # Assuming your data frame is named 'df'
+# fit1_1 <- head(fit1, -3)
+# # Create a data frame for the standard errors
+# error_data <- data.frame(
+#   term = unique(fit1_1$term),  # Assuming your data contains the terms
+#   std_error = std_errors)
+# # Merge fit1 and error_bars_df
+# fit1_2 <- cbind(fit1_1, error_data)
+# # THIS STD ERROR IS THE SAME AS WE ALREADY HAVE
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

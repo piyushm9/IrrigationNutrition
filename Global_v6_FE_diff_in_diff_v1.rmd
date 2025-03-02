@@ -1,0 +1,483 @@
+---
+title: "Paper2 DHS Diet Diversity - Global Diff in diff regression at division level"
+# This code is for diff_data_v4.dta
+# children age=>6mo (corresponding with All_data_v6.dta)
+# Regressing change in DD on change in AEI at the division level
+# D:\Delaware\Work\Paper2_Irrigation_Nutrition\Data\Diff_in_diff_v1
+
+# Fixed effects model
+
+author: "Piyush Mehta"
+last updated: Jan26,2025
+output: html_document
+---
+
+## Running the model for all countries
+
+```{r results='hide', message=FALSE, warning=FALSE}
+setwd("D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs")
+
+library(dotwhisker)
+library(dplyr)
+library('lme4')
+library('lmerTest')
+library('MuMIn')
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+library(expss)
+library(car)
+library(broom.mixed)
+library(ggplot2)
+library(forcats)
+library(extrafont)
+library(ggplot2)
+library(ggrepel)
+#library(tidyverse)
+# need to import fonts so that TW Cen font can work
+#font_import() # import fonts - only once
+loadfonts(device = "win", quiet = TRUE) # load fonts - every session
+
+df = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global.csv')
+df_sust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_sust.csv')
+df_unsust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_unsust.csv')
+
+```
+
+## Label variables for df
+# https://cran.r-project.org/web/packages/expss/vignettes/labels-support.html
+```{r}
+library(expss)
+labels <- list(
+  aei_diff_std = "Irrigated area change (Ha)",
+  treecov_2005_std = "Tree cover",
+  disturban_2005_std = "Distance from urban center",
+  distroad_2005_std = "Distance from road",
+  #disturban_cat_std = "Distance from urban center",
+  #distroad_cat_std = "Distance from road",
+  popden_2005_std = "Population density",
+  tlu_2005_std = "Livestock density",
+  age_2005_std = "Child age",
+  edu_2005_std = "Education of household head",
+  improvedtoilet2005 = "Improved Sanitation",
+  improvedwater2005 = "Improved Water",
+  sex2005 = "Male household head",
+  time_water2005_std = "Time to water",
+  wealth2005_std = "Wealth index",
+  aei_sust = "Sustainability")
+
+df = apply_labels(df,labels)
+df_sust = apply_labels(df_sust,labels)
+df_unsust = apply_labels(df_unsust,labels)
+```
+
+# (Model 1) Global
+# fixed effects
+
+```{r results='hide', message=FALSE, warning=FALSE}
+
+# Before running the model for a country, check which all variables are NA for the country
+# Then remove them from the model
+
+# age is age in months
+# country is the country name
+# v001 is cluster number (cluster_unique)
+# educationyearshead in Meredith's data goes from 0 to 21 (v133 variable)
+# + poorest_std + richest_std
+# Apr26,23 Using the var wealthindex_std and not the 4 binary vars
+
+# Jan14,24 - remember to use the binary vars for sex, improvedtoilet and improvedwater - not the std vars [using their 2005 vars as suggested]
+
+model4 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df)
+
+```
+
+
+### check collinearity
+```{r}
+vif(model4)
+```
+
+
+### model coefficients
+```{r}
+options(width = 200)
+summary(model4)
+r.squaredGLMM(model4)
+
+#write.csv(summary(model1)$coefficients,"D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_overall.csv")
+```
+
+### Plotting estimates
+# https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_model_estimates.html
+```{r}
+plot_model(model4, terms = c("aei_diff_std", "treecov_2005_std", "disturban_2005_std", "distroad_2005_std", "popden_2005_std", "tlu_2005_std", "age_2005_std", "edu_2005_std", "improvedtoilet2005", "improvedwater2005", "sex", "timewater2005_std", "wealth2005_std"), show.values = TRUE, dot.size = 0.5, value.size = 2, value.offset = 0.3, title = "AEI diff overall", xlim = c(-0.5, 0.5))
+
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_overall_aei_sust_test.png",
+  fig = last_plot(),
+  width = 12,
+  height = 9,
+  dpi = 600,
+  label.color = "black",
+  label.size = 2.4,
+  axis.textsize = 0.75,
+  axis.titlesize = 0.5,
+  theme(text = element_text(family = "TW Cent"))
+  #theme(text = element_text(family = "TW Cent MT Condensed"))
+# theme = theme_get(),
+  )
+```
+
+
+### marginal and conditional R2
+```{r}
+r.squaredGLMM(model1)
+```
+
+### model anova
+```{r}
+options(width = 200)
+anova(model1)
+```
+
+# ----------------------------------------------------------------------------
+# (Model 2) Sustainable AEI expansion Global
+
+```{r results='hide', message=FALSE, warning=FALSE}
+
+model_sust1 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df_sust)
+
+```
+# model coefficients
+```{r}
+options(width = 200)
+summary(model_sust1)
+r.squaredGLMM(model_sust1)
+write.csv(summary(model_sust1)$coefficients,"D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_sust.csv")
+```
+
+### Plotting estimates
+# https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_model_estimates.html
+```{r}
+plot_model(model_sust1, terms = c("aei_diff_std", "treecov_2005_std", "disturban_2005_std", "distroad_2005_std", "popden_2005_std", "tlu_2005_std", "age_2005_std", "edu_2005_std", "improvedtoilet2005", "improvedwater2005", "sex", "timewater2005_std", "wealth2005_std"), show.values = TRUE, dot.size = 0.5, value.size = 2, value.offset = 0.3, title = "AEI diff sustainable", xlim = c(-0.5, 0.5))
+
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_sust.png",
+  fig = last_plot(),
+  width = 12,
+  height = 9,
+  dpi = 600,
+  label.color = "black",
+  label.size = 2.4,
+  axis.textsize = 0.75,
+  axis.titlesize = 0.5,
+  theme(text = element_text(family = "TW Cent"))
+# theme = theme_get(),
+  )
+```
+
+### model anova
+```{r}
+options(width = 200)
+anova(model_sust1)
+```
+
+
+
+# ----------------------------------------------------------------------------
+# (Model 3) Unsustainable AEI expansion Global
+
+```{r results='hide', message=FALSE, warning=FALSE}
+
+model_unsust1 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df_unsust)
+
+
+```
+
+# model coefficients
+```{r}
+options(width = 200)
+summary(model_unsust1)
+r.squaredGLMM(model_unsust1)
+write.csv(summary(model_unsust1)$coefficients,"D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_unsust.csv")
+```
+
+### Plotting estimates
+# https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_model_estimates.html
+```{r}
+plot_model(model_unsust1, terms = c("aei_diff_std", "treecov_2005_std", "disturban_2005_std", "distroad_2005_std", "popden_2005_std", "tlu_2005_std", "age_2005_std", "edu_2005_std", "improvedtoilet2005", "improvedwater2005", "sex", "timewater2005_std", "wealth2005_std"), show.values = TRUE, dot.size = 0.5, value.size = 2, value.offset = 0.3, title = "AEI diff unsustainable", xlim = c(-0.5, 0.5))
+
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_diff_unsust.png",
+  fig = last_plot(),
+  width = 12,
+  height = 9,
+  dpi = 600,
+  label.color = "black",
+  label.size = 2.4,
+  axis.textsize = 0.75,
+  axis.titlesize = 0.5,
+  theme(text = element_text(family = "TW Cent"))
+  )
+```
+
+### model anova
+```{r}
+options(width = 200)
+anova(model_unsust1)
+```
+
+# ----------------------------------------------------------------------------
+# PLOT MODELS TOGETHER
+
+
+```{r results='hide', message=FALSE, warning=FALSE}
+library(dotwhisker)
+library(dplyr)
+library('lme4')
+library('lmerTest')
+library('MuMIn')
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+library(expss)
+library(car)
+library(broom.mixed)
+library(ggplot2)
+library(forcats)
+library(extrafont)
+library(ggplot2)
+library(ggrepel)
+library(viridis)
+#library(tidyverse)
+# need to import fonts so that TW Cen font can work
+#font_import()
+#loadfonts(device = "win")
+
+setwd("D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs")
+
+```
+# Load all data
+```{r}
+
+df = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global.csv')
+df_sust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_sust.csv')
+df_unsust = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Global_unsust.csv')
+
+```
+
+
+# All models
+```{r results='hide', message=FALSE, warning=FALSE}
+
+# (Model 1) Overall
+model1 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df)
+
+# (Model 2) Sustainable
+model2 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df_sust)
+
+# (Model 3) Unsustainable
+model3 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df_unsust)
+
+```
+
+### check collinearity
+```{r}
+vif(model1)
+vif(model2)
+vif(model3)
+```
+
+
+# https://nicholasrjenkins.science/post/data_viz_r/data_visualization_r/
+# combining the results from both models into a single data frame
+# also adding a new column with the name of each model
+```{r}
+fit1 <- tidy(model1, conf.int = TRUE) %>% 
+  mutate(model = "Overall")
+
+fit2 <- tidy(model2, conf.int = TRUE) %>% 
+  mutate(model = "Sustainable")
+
+fit3 <- tidy(model3, conf.int = TRUE) %>% 
+  mutate(model = "Unsustainable")
+
+model_results <- bind_rows(fit1, fit2, fit3)
+
+# Filter out rows corresponding to the intercept term, sd__observation and sd__intercept
+model_results <- model_results[!(model_results$term %in% c("(Intercept)", "sd__Observation", "sd__(Intercept)")), ]
+
+label1 <- list(
+  aei_diff_std = "Irrigated area change (Ha)",
+  treecov_2005_std = "Tree cover",
+  disturban_2005_std = "Distance from urban center",
+  distroad_2005_std = "Distance from road",
+  #disturban_cat_std = "Distance from urban center",
+  #distroad_cat_std = "Distance from road",
+  popden_2005_std = "Population density",
+  tlu_2005_std = "Livestock density",
+  age_2005_std = "Child age",
+  edu_2005_std = "Education of household head",
+  improvedtoilet2005 = "Improved Sanitation",
+  improvedwater2005 = "Improved Water",
+  sex2005 = "Male household head",
+  time_water2005_std = "Time to water",
+  wealth2005_std = "Wealth index")
+
+label2 = c(aei_diff_std = "Irrigated area change (Ha)")
+
+# Create a vector of variable names with the desired order
+data_labels <- c(
+"aei_diff_std","treecov_2005_std", "disturban_2005_std", "distroad_2005_std", "popden_2005_std", "tlu_2005_std", "age_2005_std", "edu_2005_std", "improvedtoilet2005", "improvedwater2005", "sex2005", "time_water2005_std", "wealth2005_std")
+
+# Reorder the term variable in your data according to the desired order
+model_results$term <- factor(model_results$term, levels = data_labels)
+
+# Create a column for significance labels
+#model_results$significance <- ifelse(model_results$p.value < 0.05, "*", "")
+
+# Add a column for significance level [USED THIS IN PLOT]
+# Jan14,24 I also added the p<0.1 "." in the column - haven't done it for all prev codes
+model_results$significance_level <- ifelse(model_results$p.value < 0.001, "****",
+                        ifelse(model_results$p.value < 0.01, "***",
+                        ifelse(model_results$p.value < 0.05, "**",
+                        ifelse(model_results$p.value < 0.1, "*", ""))))
+
+# keep only the rows that we need, exclude the factor vars coefficients
+rows_to_keep1 <-c(1:13, 25:37, 49:61)
+model_results1 <- model_results[rows_to_keep1,]
+data_order <- unique(model_results1$term)
+#model_results1 <- model_results[c(1:13, 25:37, 49:61), ]
+
+# keep only irrigation coefficients
+rows_to_keep <- c(1, 14, 27) # Create a vector of row indices you want to keep
+model_results_aei <- model_results1[rows_to_keep, ]
+
+# exported it
+#write.csv(model_results1, "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Combined_results.csv")
+
+# create new variable 'model1' as Overall, No water stress, Water stress
+model_results1 <- model_results1 %>%
+  mutate(model1 = case_when(
+    model == "Sustainable" ~ "No water stress",
+    model == "Unsustainable" ~ "Water stress",
+    TRUE ~ "Overall"  # Ensure Overall remains unchanged
+  )) %>%
+  mutate(model1 = factor(model1, levels = c("Overall", "No water stress", "Water stress")))
+
+```
+
+# ------------------------------------------------------------------------------
+ 
+# SUPPLEMENTARY FIGURE 5 (Manuscript NatSust4 - Feb2,25)  [USED THIS]
+
+# Plot for all coefficient variables 
+# oct26,23 - removed the lines between stars and variable by using geom_text instead of geom_text_repel
+
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+
+ggplot(data = model_results1, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model1)) +
+  
+  # Error bars
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray", height = 0.2) +
+  
+  geom_point(shape = 16, position = position_dodge(width = 0.6), size=2) +
+
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(-4.2, 2.84)) +
+  #scale_y_discrete(labels = label1) +
+  scale_y_discrete(limits = rev(data_order), labels = label1) +
+
+  # https://www.color-hex.com/color-palette/1872
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.key = element_blank(),
+        axis.text = element_text(size = 12), # the axis label size
+        axis.title = element_text(size = 12), # Adjust the size for axis titles
+        legend.text = element_text(size = 12)  # Adjust the size for legend text
+        )
+  
+```
+
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Figure_S5_without_asterisks.png",
+ 
+   fig = last_plot(),
+   width = 18,
+   height = 12,
+   dpi = 2400,
+   label.color = "black",
+   label.size = 1.5,
+#   axis.textsize = 0.5,
+#   axis.titlesize = 0.5
+   )
+```
+
+# ------------------------------------------------------------------------------ 
+# FIGURE 2C (Manuscript NatSust2 Jan1,25) [USED THIS]
+
+# Plot for only AEI coefficient variable 
+
+```{r}
+# Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
+
+ggplot(data = model_results_aei, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, color = model)) +
+  
+  # Error bars
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray", height = 0.1) +
+  
+  geom_point(shape = 16, position = position_dodge(width = 0.5), size=3) +
+
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(-1.15, 0.26)) +
+  scale_y_discrete(labels = label2) +
+
+  # https://www.color-hex.com/color-palette/1872
+  scale_color_manual(values = c("#0057e7", "#008744", "#ffa700")) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.key = element_blank(),
+        axis.text = element_text(size = 14), # the axis label size
+        axis.title = element_text(size = 14), # Adjust the size for axis titles
+        legend.text = element_text(size = 14)  # Adjust the size for legend text
+        )
+  
+```
+
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Data\\Diff_in_diff_v1\\regression_outputs\\Figure_2C_without_asterisks.png",
+ 
+   fig = last_plot(),
+   width = 18,
+   height = 12,
+   dpi = 2400,
+   label.color = "black",
+   label.size = 1.5,
+#   axis.textsize = 0.5,
+#   axis.titlesize = 0.5
+   )
+```
+# ------------------------------------------------------------------------------ 
+
+

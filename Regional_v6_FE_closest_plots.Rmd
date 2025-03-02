@@ -1,0 +1,281 @@
+---
+title: "Paper2 - Regional plots"
+author: "Piyush Mehta"
+date updated: "Feb2,2025"
+
+# This code is for All_data_v6.dta that has all countries
+# Fixed effects model
+# Running regressions for 5 regional models and plotting their coeff estimates together for the manuscript figure
+# only AEI closest var use, no change vars
+
+---
+
+
+# https://nicholasrjenkins.science/post/data_viz_r/data_visualization_r/
+
+```{r results='hide', message=FALSE, warning=FALSE}
+library(dotwhisker)
+library(dplyr)
+library('lme4')
+library('lmerTest')
+library('MuMIn')
+library(sjPlot)
+library(sjlabelled)
+library(sjmisc)
+library(ggplot2)
+library(expss)
+library(car)
+library(broom.mixed)
+library(ggplot2)
+library(forcats)
+library(extrafont)
+library(ggplot2)
+library(ggrepel)
+library(viridis)
+library(writexl)
+
+#library(tidyverse)
+# need to import fonts so that TW Cen font can work
+#font_import()
+#loadfonts(device = "win")
+
+setwd("D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest")
+
+```
+
+```{r}
+# Load all regional data
+
+df1 = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\America\\America.csv')
+
+df2 = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Asia\\Asia.csv')
+
+df3 = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\MiddleEast\\MiddleEast.csv')
+
+df4 = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\WestAfrica\\WestAfrica.csv')
+
+df5 = read.csv('D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\SoutheastAfrica\\SoutheastAfrica.csv')
+```
+
+
+# All models
+```{r results='hide', message=FALSE, warning=FALSE}
+
+# (Model 1) America
+model1 = lm(diet_m ~ aei_closest_std + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std+ factor(yeardhs) + factor(country), df1)
+
+# (Model 2) Asia
+model2 = lm(diet_m ~ aei_closest_std + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country), df2)
+
+# (Model 3) Middle East
+# Not using timewater_std as obs are null for Jordan for this var
+model3 = lm(diet_m ~ aei_closest_std + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + wealthindex_std + factor(yeardhs) + factor(country), df3)
+
+# (Model 4) West Africa
+model4 = lm(diet_m ~ aei_closest_std + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country), df4)
+
+# (Model 4) Southeast Africa
+model5 = lm(diet_m ~ aei_closest_std + treecov_std + disturban_cat_std + distroad_cat_std + popden_std + tlu_std + age_std + education_std + improvedtoilet + improvedwater + sex + timewater_std + wealthindex_std + factor(yeardhs) + factor(country), df5)
+
+```
+
+
+# https://nicholasrjenkins.science/post/data_viz_r/data_visualization_r/
+# combining the results from both models into a single data frame
+# also adding a new column with the name of each model
+```{r}
+fit1 <- tidy(model1, conf.int = TRUE) %>% 
+  mutate(model = "Central/South America")
+
+fit2 <- tidy(model2, conf.int = TRUE) %>% 
+  mutate(model = "South/Southeast Asia")
+
+fit3 <- tidy(model3, conf.int = TRUE) %>% 
+  mutate(model = "Middle East")
+
+fit4 <- tidy(model4, conf.int = TRUE) %>% 
+  mutate(model = "West Africa")
+
+fit5 <- tidy(model5, conf.int = TRUE) %>% 
+  mutate(model = "Southern/East Africa")
+
+model_results <- bind_rows(fit1, fit2, fit3, fit4, fit5)
+
+# Filter out rows corresponding to the intercept term, sd__observation and sd__intercept
+model_results <- model_results[!(model_results$term %in% c("(Intercept)", "sd__Observation", "sd__(Intercept)")), ]
+
+# keep only the rows that we need, exclude the factor vars coefficients
+model_results <- model_results[c(1:13, 18:30, 36:47, 52:64, 76:88), ]
+
+label1 = c(
+          aeidif_std = "Irrigated area change (Ha)",
+          aei_pctdif_std = "Irrigated area percent change",
+          aei_pct2000_std = "Irrigated area 2000",
+          aeidif_10y_std = "Irrigated area 10y diff",
+					aeidif_20y_std = "Irrigated area change 20y",
+					aeidif_30y_std = "Irrigated area 30y diff",
+					aei_closest_std = "Irrigated area of closest year",
+          treecov_std = "Tree cover",
+          disturban_std = "Distance from city",
+          distroad_std = "Distance from road",
+          disturban_cat_std = "Distance from city",
+          distroad_cat_std = "Distance from road",
+          popden_std = "Population density",
+          tlu_std = "Livestock density",
+          age_std = "Child age",
+          education_std = "Education of household head",
+          improvedtoilet = "Improved Sanitation",
+          improvedwater = "Improved Water",
+          sex = "Male household head",
+          timewater_std = "Time to water",
+          poorest_std = "Poorest household",
+          poorer_std = "Poorer household",
+          richer_std = "Richer household",
+          richest_std = "Richest household",
+          wealthindex_std = "Wealth index",
+					yeardhs = "Survey year")
+
+label2 = c(aei_closest_std = "Irrigated area of closest year")
+
+# Create a vector of variable names with the desired order
+data_labels <- c(
+  "aei_closest_std", "aeidif_20y_std", "aeidif_30y_std", "aeidif_std",
+  "aei_pctdif_std", "aei_pct2000_std", "treecov_std", "disturban_std",
+  "distroad_std", "disturban_cat_std", "distroad_cat_std", "popden_std",
+  "tlu_std", "age_std", "education_std", "improvedtoilet",
+  "improvedwater", "sex", "timewater_std", "poorest_std", "poorer_std",
+  "richer_std", "richest_std", "wealthindex_std", "yeardhs"
+)
+
+data_order <- unique(model_results$term)
+
+# Reorder the term variable in your data according to the desired order
+model_results$term <- factor(model_results$term, levels = data_labels)
+
+# Create a column for significance labels
+#model_results$significance <- ifelse(model_results$p.value < 0.05, "*", "")
+
+# Add a column for significance level [USED THIS IN PLOT]
+# Jan28,24 I also added the p<0.1 "." as "*" in the column
+# Doing one extra * for each coefficient significance to also include the p<0.1 significance, bz the diff in diff regression is marginally significant (Fig2C)
+model_results$significance <- ifelse(model_results$p.value < 0.001, "****",
+                        ifelse(model_results$p.value < 0.01, "***",
+                        ifelse(model_results$p.value < 0.05, "**",
+                        ifelse(model_results$p.value < 0.1, "*", ""))))
+
+# keep only irrigation coefficients
+rows_to_keep <- c(1, 14, 27, 39, 52) # Create a vector of row indices you want to keep
+model_results_aei <- model_results[rows_to_keep, ] 
+
+#rows_to_keep <- c(1, 2, 15, 16, 29, 30, 42, 43, 56, 57) # Create a vector of row indices you want to keep
+
+
+# Export the model_results to an Excel file
+library(writexl)
+#write_xlsx(model_results, "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Regional_results_feb2,25.xlsx")
+```
+
+# Figures S4 (supplementary) - Used Jan28,24 for Manuscript v9
+# 
+# Plot without asterisks 
+# This is the figure S4 that I will add asterisks to in Powerpoint 
+```{r}
+ggplot(data = model_results, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, 
+           color = model)) +
+  # Error bars
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray80", height = 0.2) +
+  geom_point(shape = 16, position = position_dodge(width = 0.5), size = 2) +
+
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  scale_x_continuous(limits = c(-0.9, 0.9)) +
+  scale_y_discrete(limits = rev(data_order), labels = label1) +
+
+  ggpubr::theme_pubclean(flip = TRUE)+
+  theme(#plot.margin = margin(1, 1, 0, -1, "lines"), # margin(top, right, bottom, left, unit)
+        text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.text = element_text(size = 12), # legend text size
+        legend.title = element_text(size = 11), 
+        legend.key = element_blank(),
+        legend.position = "top",
+        legend.box = "horizontal",
+        axis.text.y = element_text(size = 12), # y-axis label size
+        axis.text.x = element_text(size = 12) # x-axis label size
+        
+        )
+
+```
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\FigureS4_Regional_no_asterisks.png",
+  fig = last_plot(),
+  width = 24,
+  height = 14,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  #axis.textsize = 0.5,
+  #axis.titlesize = 0.5,
+  )
+```
+
+# ----------------------------------------------------------------------------------------
+## (FIGURE 2-B) PLOT WITH ONLY AEI CLOSEST COEFFICIENT (used Jan28,24 for v9)
+
+# Plot
+```{r}
+gg<-ggplot(data = model_results_aei, 
+       aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, 
+           color = model)) +
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error, group = model),
+                 position = position_dodge(width = 0.5),  # Offset the error bars
+                 color = "gray80", height = 0.2) +
+  geom_point(shape = 16, position = position_dodge(width = 0.5), size=3.5) +
+  # commented the below line to remove asterisks (oct30,23)
+  #geom_text(aes(label = significance), nudge_x = 0.01, size = 3, show.legend = FALSE) +  # Add significant labels
+  
+  labs(x = "Coefficient Estimate", y = "",
+       color = "",  shape = "") +
+  
+  scale_x_continuous(limits = c(-0.12, 0.19)) +
+  scale_y_discrete(labels = label2) +
+  #scale_y_discrete(labels = label1) +
+  ggpubr::theme_pubclean(flip = TRUE)+
+  
+  # Set font to TW Cen MT - this one doesn't work, but condensed ones do
+  theme(#plot.margin = margin(1, 1, 0, -1, "lines"), # margin(top, right, bottom, left, unit)
+        text = element_text(family = "Tw Cen MT Condensed Extra Bold"),
+        legend.text = element_text(size = 16), # legend text size
+        #legend.title = element_text(size = 11), 
+        legend.key = element_blank(),
+        legend.position = "top",
+        legend.box = "horizontal",
+        axis.text = element_text(size = 16), # Increase the axis label size
+        axis.title = element_text(size = 16) # Adjust the size for axis titles
+              )
+
+gg
+```
+
+### Save the plot
+```{r}
+save_plot(
+  "D:\\Delaware\\Work\\Paper2_Irrigation_Nutrition\\Results\\Regression_outputs\\Cluster_level\\Global_v6_closest\\Figure2B_Regional1_AEI.png",
+  fig = last_plot(),
+  width = 28,
+  height = 18,
+  dpi = 2400,
+  label.color = "black",
+  label.size = 1.5,
+  #axis.textsize = 0.5,
+  #axis.titlesize = 0.5,
+  )
+```
+
+
+
+
