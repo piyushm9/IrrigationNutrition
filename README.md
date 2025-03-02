@@ -3,11 +3,11 @@ This repository has the Python and R files used to run regressions and do the an
 
 This repository contains scripts used in the Irrigation & Nutrition data analysis and regressions. The scripts process, analyze, and visualize datasets related to irrigation, agricultural sustainability, and nutrition at global and regional scales.
 
-**Repository Structure
+**Repository Structure**
 The repository consists of the following scripts:
 
-**1. Global_v6_closest_three_models.rmd
-**Purpose: Runs models to estimate irrigation impacts on nutrition by selecting the three closest irrigation sites for comparison.
+**1. Global_v6_closest_three_models.rmd**
+**Purpose: Runs models to estimate irrigation impacts on nutrition by selecting the three closest irrigation sites for comparison.**
 Key Steps:
 Reads irrigation and nutrition datasets.
 Matches irrigation sites based on spatial proximity.
