@@ -7,21 +7,21 @@ This repository contains scripts used in the Irrigation & Nutrition data analysi
 The repository consists of the following scripts:
 
 **1. Global_v6_closest_three_models.rmd**
-**Purpose: Runs models to estimate irrigation impacts on nutrition by selecting the three closest irrigation sites for comparison.**
+**Purpose: Runs Fixed-Effects regressions to estimate the association of irrigation expansion on diet diversity for overall, no water stress and water stress clusters.**
 Key Steps:
-Reads irrigation and nutrition datasets.
-Matches irrigation sites based on spatial proximity.
+Reads irrigation and nutrition datasets.  
 Estimates effects using statistical models.
+Produces plots visualizing results.
 
 **2. Global_v6_FE_diff_in_diff_v1.rmd**
-**Purpose: Implements a fixed-effects difference-in-differences (FE-DID) approach to analyze changes in nutrition outcomes due to irrigation expansion.**
+**Purpose: Runs Fixed-Effects regressions difference-in-differences (FE-DID) regresssion to estimate the association between irrigation expansion on change in diet diversity.**
 Key Steps:
 Reads and preprocesses data.
 Applies a FE-DID regression model.
 Evaluates the impact of irrigation on food security indicators.
 
 **3. Regional_v6_FE_closest_plots.Rmd
-Purpose: Conducts regional-level analysis of irrigation effects using fixed effects models.**
+Purpose: Runs Fixed-Effects regressions to estimate the association of irrigation expansion on diet diversity for overall, no water stress and water stress clusters for each region.**
 Key Steps:
 Filters data for specific regions.
 Implements FE regression models at the regional scale.
