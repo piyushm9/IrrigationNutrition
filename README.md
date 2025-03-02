@@ -1,10 +1,10 @@
 # Irrigation Nutrition
-This repository has the Python and R files used to run regressions and do the analysis for the paper "Evidence of tradeoffs between child diet diversity and water-stressed irrigation expansion in the Global South"
+This repository has the Python and R files used to run regressions and do the analysis for the paper "Evidence of tradeoffs between child diet diversity and water-stressed irrigation expansion in the Global South"  
 
-This repository contains scripts used in the Irrigation & Nutrition data analysis and regressions. The scripts process, analyze, and visualize datasets related to irrigation, agricultural sustainability, and nutrition at global and regional scales.
+This repository contains scripts used in the Irrigation & Nutrition data analysis and regressions. The scripts process, analyze, and visualize datasets related to irrigation, agricultural sustainability, and nutrition at global and regional scales.  
 
-**Repository Structure**
-The repository consists of the following scripts:
+**Repository Structure**  
+The repository consists of the following scripts:  
 
 **1. Global_v6_closest_three_models.rmd**  
 **Purpose: Runs Fixed-Effects regressions to estimate the association of irrigation expansion on diet diversity for overall, no water stress and water stress clusters.**  
