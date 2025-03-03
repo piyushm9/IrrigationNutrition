@@ -40,6 +40,9 @@ Purpose: Computes export probability for sustainable and unsustainable agricultu
 Key Steps:  
 Merges SPAM 2010 harvested area data with FAOSTAT export data.  
 Calculates export propensity (Export/Production ratio) for each crop.  
-Aggregates results at the regional and sustainability levels.  
+Aggregates results at the regional and sustainability levels.
+
+**Global.csv**   
+Sample dataset to run the above codes.
 
 
