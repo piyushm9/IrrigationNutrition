@@ -45,4 +45,96 @@ Aggregates results at the regional and sustainability levels.
 **Global.csv**   
 Sample dataset to run the above codes.
 
+Here’s the **Software Requirements, Installation Instructions, and Steps to Execute the Code** for your **Nature Sustainability submission**:
+
+---
+
+# **Software Requirements, Installation, and Execution Guide**
+
+This document provides details on the software dependencies, installation instructions, and execution steps for the **Irrigation & Nutrition**. The provided **R and Python scripts** analyze the associations between irrigation expansion and child diet diversity.
+
+## **1. Software Requirements**  
+This repository requires the following software and packages:
+
+### **R Environment**  
+- **Version:** R **4.2+**  
+- **Required R Packages:**  
+  - `tidyverse` (for data manipulation and visualization)  
+  - `lme4` (for fixed effects models)  
+  - `plm` (for panel data analysis)  
+  - `stargazer` (for regression output formatting)  
+  - `ggplot2` (for visualization)  
+  - `readr` (for reading data files)  
+  - `dplyr` (for data manipulation)  
+
+### **Python Environment**  
+- **Version:** Python **3.8+**  
+- **Required Python Libraries:**  
+  - `pandas` (for data processing)  
+  - `numpy` (for numerical computations)  
+  - `openpyxl` (for working with Excel files)  
+  - `os` (for file path handling)  
+
+---
+
+## **2. Installation Instructions**
+
+### **Install R and R Packages**  
+1. **Download and Install R (if not already installed)**:  
+   - [Download R from CRAN](https://cran.r-project.org/)  
+2. **Install R dependencies in RStudio**:  
+   Open RStudio and run the following command:  
+   ```r
+   install.packages(c("tidyverse", "lme4", "plm", "stargazer", "ggplot2", "readr", "dplyr"))
+   ```
+
+### **Install Python and Required Libraries**  
+1. **Install Python** (if not installed):  
+   - [Download Python 3.8+](https://www.python.org/downloads/)  
+2. **Install dependencies using pip**:  
+   Open a terminal or command prompt and run:  
+   ```bash
+   pip install pandas numpy openpyxl
+   ```
+
+---
+
+## **3. Steps to Execute the Code**  
+
+### **R Scripts (`.Rmd` files)**  
+1. **Open the R script in RStudio**.  
+2. Ensure the dataset files are placed in the correct directory.  
+3. Run the script **chunk-by-chunk** or **execute the entire file** using:  
+   ```r
+   rmarkdown::render("Global_v6_FE_diff_in_diff_v1.rmd")  
+   ```
+---
+
+### **Python Scripts (`.py` files)**  
+1. **Navigate to the script directory**:  
+   ```bash
+   cd /path/to/IrrigationNutrition
+   ```
+2. **Run the Python script**:  
+   ```bash
+   python SPAM2010_HA_sust_unsust_2024Feb.py  
+   ```
+   or  
+   ```bash
+   python SPAM2010_sust_unsust_Export_prob.py  
+   ```
+---
+
+### **Demo Dataset**
+To facilitate testing, a **small demo dataset** is included in the repository:
+- `global.csv`: Contains a subset of irrigation and nutrition data for demonstration.
+
+To run the analysis on the demo dataset, modify the file paths in the scripts to point to `demo_data.csv`.
+
+---
+
+## **4. Notes**
+- Ensure all dependencies are installed before running the scripts.
+- If running the **R scripts** in **RStudio**, execute line-by-line for troubleshooting.
+- For **Python scripts**, ensure the correct file paths are specified.
 
