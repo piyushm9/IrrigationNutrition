@@ -2,17 +2,12 @@
 """
 Feb13,2024, Piyush Mehta , Paper2 - Irrigation Nutrition
 
-Repeating the analysis done for Fig3 using SPAM 2010 total HA dataset (33 crops- rasters ending with _A) for sust vs unsust 
-- will also do make the figure by regions
-- 33 crops that are common btw FAOSTAT & SPAM2010 data
-
 1. Import SPAM 2010 data from DHS_SPAM2010_Feb2024.xlsx
 2. Merge with All_data_v3.dta after removing duplicates
 3. Keep only the obs that are in All_data_v3 based on dhsid
 4. Calculate fractional HA
 5. Total frac HA per country would be the sum of frac HA for the DHS clusters within that country
 [not using number of DHS clusters/country as weights]
-6. 
 
 folder = D:\Delaware\Work\Paper2_Irrigation_Nutrition\Data\Crop_mixes\MAP_SPAM\Total_HA_2010
 
@@ -603,12 +598,7 @@ df8_1_long.to_csv(path+'df8_1_long_by_region.csv', index=False)
 
 
 #%%
-'''
-1. Do the nutrition part next
-2. SDI regional values
-3. then export part for both AEI and Regional
 
-'''
 
 #%% CELL 
 # DOING THE SAME FOR CASH NUTRI DATA
