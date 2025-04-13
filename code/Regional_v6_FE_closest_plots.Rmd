@@ -176,9 +176,6 @@ library(writexl)
 ```
 
 # Figures S4 (supplementary) - Used Jan28,24 for Manuscript v9
-# 
-# Plot without asterisks 
-# This is the figure S4 that I will add asterisks to in Powerpoint 
 ```{r}
 ggplot(data = model_results, 
        aes(x = estimate, y = fct_reorder(term, estimate), xmin = conf.low, xmax = conf.high, 
