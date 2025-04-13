@@ -45,8 +45,6 @@ Aggregates results at the regional and sustainability levels.
 **Global.csv**   
 Sample dataset to run the above codes.
 
-Here’s the **Software Requirements, Installation Instructions, and Steps to Execute the Code** for your **Nature Sustainability submission**:
-
 ---
 
 # **Software Requirements, Installation, and Execution Guide**
