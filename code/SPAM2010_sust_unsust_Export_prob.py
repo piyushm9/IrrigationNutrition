@@ -70,7 +70,6 @@ df2.rename(columns={'Value_thousandtonnes': 'production'}, inplace=True)
 df3.rename(columns={'Value_thousandtonnes': 'export'}, inplace=True)
 
 # Group the DataFrame by 'country', 'year', and 'crop', and calculate the sum of 'production' and 'export' quanities
-# Note sep20,23 - I don't know why I did this before, cz it results in the same df columns and rows, and same values, so maybe skip this next time if you do it
 df4 = df2.groupby(['country', 'year', 'crop'])['production'].sum().reset_index()
 df5 = df3.groupby(['country', 'year', 'crop'])['export'].sum().reset_index()
 
