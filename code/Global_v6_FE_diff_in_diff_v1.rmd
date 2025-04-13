@@ -77,18 +77,6 @@ df_unsust = apply_labels(df_unsust,labels)
 
 ```{r results='hide', message=FALSE, warning=FALSE}
 
-# Before running the model for a country, check which all variables are NA for the country
-# Then remove them from the model
-
-# age is age in months
-# country is the country name
-# v001 is cluster number (cluster_unique)
-# educationyearshead in Meredith's data goes from 0 to 21 (v133 variable)
-# + poorest_std + richest_std
-# Apr26,23 Using the var wealthindex_std and not the 4 binary vars
-
-# Jan14,24 - remember to use the binary vars for sex, improvedtoilet and improvedwater - not the std vars [using their 2005 vars as suggested]
-
 model4 = lm(diet_diff ~ aei_diff_std + age_2005_std + distroad_2005_std + disturban_2005_std +  edu_2005_std +  improvedtoilet2005 + improvedwater2005 +  popden_2005_std + sex2005 + time_water2005_std + tlu_2005_std  + treecov_2005_std + wealth2005_std + factor(country), df)
 
 ```
@@ -372,10 +360,9 @@ model_results1 <- model_results1 %>%
 
 # ------------------------------------------------------------------------------
  
-# SUPPLEMENTARY FIGURE 5 (Manuscript NatSust4 - Feb2,25)  [USED THIS]
+# SUPPLEMENTARY FIGURE 5 (Manuscript NatSust4 - Feb2,25)
 
 # Plot for all coefficient variables 
-# oct26,23 - removed the lines between stars and variable by using geom_text instead of geom_text_repel
 
 ```{r}
 # Make sure to adjust scale_x_continuous limits such that all points, and error bars are visible
@@ -427,7 +414,7 @@ save_plot(
 ```
 
 # ------------------------------------------------------------------------------ 
-# FIGURE 2C (Manuscript NatSust2 Jan1,25) [USED THIS]
+# FIGURE 2C (Manuscript NatSust2 Jan1,25)
 
 # Plot for only AEI coefficient variable 
 
